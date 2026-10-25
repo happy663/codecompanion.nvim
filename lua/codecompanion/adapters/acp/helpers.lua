@@ -30,10 +30,20 @@ M.build_messages = function(self, args)
       if msg.content and msg.content ~= "" then
         if msg._meta and (msg._meta.tag == tags.FILE or msg._meta.tag == tags.BUFFER) then
           if msg.context and msg.context.path then
-            return {
-              type = "text",
-              text = string.format([[Sharing the following file as context: %s]], msg.context.path),
-            }
+            local path = msg.context.path
+            -- The file may have been deleted or moved since it was shared, so fall
+            -- back to the content that was captured at that time
+            if vim.fn.filereadable(path) == 1 then
+              return {
+                type = "text",
+                text = string.format([[Sharing the following file as context: %s]], path),
+              }
+            else
+              return {
+                type = "text",
+                text = msg.content,
+              }
+            end
           end
         else
           return {
